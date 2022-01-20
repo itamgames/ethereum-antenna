@@ -6,7 +6,6 @@ import { esbuildDecorators } from '@anatine/esbuild-decorators';
 
 async function buildPackage(path) {
   const entry = `${path}/src/index.ts`;
-  console.log(entry);
   const isEntryExists = existsSync(entry);
 
   let packageJSON;
