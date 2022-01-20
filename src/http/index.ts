@@ -39,6 +39,7 @@ function listenHTTP(port: number, eventStore: IEventStore) {
   app.use(router.routes());
   app.use(router.allowedMethods());
   app.listen(port, () => console.log(`HTTP server started on port: ${port}`));
+  return app;
 }
 
 export default listenHTTP;

@@ -41,7 +41,7 @@ class EthereumAntenna {
     await this.eventStore.connect();
     await this.producer.connect();
 
-    listenBlockchain({
+    await listenBlockchain({
       type: this.type,
       rpc: this.rpc,
       blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
@@ -52,7 +52,7 @@ class EthereumAntenna {
     });
 
     if (this.httpPort) {
-      listenHTTP(this.httpPort, this.eventStore);
+      await listenHTTP(this.httpPort, this.eventStore);
     }
   }
 
@@ -60,7 +60,7 @@ class EthereumAntenna {
     await this.eventStore.connect();
     await this.producer.connect();
 
-    listenBlockchain({
+    await listenBlockchain({
       type: this.type,
       rpc: this.rpc,
       blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
@@ -78,7 +78,7 @@ class EthereumAntenna {
       throw new Error('http port is required');
     }
 
-    listenHTTP(this.httpPort, this.eventStore);
+    return listenHTTP(this.httpPort, this.eventStore);
   }
 }
 

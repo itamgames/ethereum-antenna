@@ -73,7 +73,16 @@ async function query ({ blockNumber, lastBlockNumber, backOffBlock, eventContrac
   return contractEvents;
 }
 
-async function syncer(contract: ContractSchema, rpc: string, delayBlock: number, backOffBlock: number, eventStore: IEventStore, producer: IProducer) {
+type SyncType = {
+  contract: ContractSchema;
+  rpc: string;
+  delayBlock: number;
+  backOffBlock: number;
+  eventStore: IEventStore;
+  producer: IProducer;
+}
+
+async function syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, producer }: SyncType) {
   try {
     const ABI = contract.events.reduce((acc: AbiItem[], evt) => acc.concat(evt.abi), []);
     const contractAddress = contract.address;
@@ -146,14 +155,13 @@ async function listenBlockchain({ type, rpc, blockPerSecond, delayBlock, backOff
     cron.schedule(`*/${blockPerSecond} * * * * *`, async () => {
       contracts.forEach(async (contract) => {
         const atomic = Atomic(syncer, contract.address);
-        await atomic.run(contract, rpc, delayBlock, backOffBlock, eventStore, producer);
+        await atomic.run({ contract, rpc, delayBlock, backOffBlock, eventStore, producer });
       });
     });
   } else {
-    contracts.forEach(async (contract) => {
-      const atomic = Atomic(syncer, contract.address);
-      await atomic.run(contract, rpc, delayBlock, backOffBlock, eventStore, producer);
-    });
+    await Promise.all(contracts.map(async (contract) => {
+      await syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, producer });
+    }));
   }
 }
 
