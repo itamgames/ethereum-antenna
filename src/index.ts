@@ -8,8 +8,9 @@ import { BroadcastConfig, IProducer } from './producer/interface';
 export type Config = {
   eventStore: EventStoreConfig;
   producer: BroadcastConfig;
+  type: 'standalone' | 'depend';
   rpc: string;
-  blockPerSecond: number;
+  blockPerSecond?: number;
   delayBlock?: number;
   backOffBlock?: number;
   httpPort?: number;
@@ -19,7 +20,8 @@ class EthereumAntenna {
   eventStore: IEventStore;
   producer: IProducer;
   rpc: string;
-  blockPerSecond: number;
+  type: 'standalone' | 'depend';
+  blockPerSecond?: number;
   delayBlock: number;
   backOffBlock: number;
   httpPort: number | undefined;
@@ -28,21 +30,55 @@ class EthereumAntenna {
     this.eventStore = createEventStoreInstance(config.eventStore);
     this.producer = createBroadcastInstance(config.producer);
     this.rpc = config.rpc;
+    this.type = config.type;
     this.blockPerSecond = config.blockPerSecond;
     this.httpPort = config.httpPort;
     this.delayBlock = config.delayBlock || 0;
     this.backOffBlock = config.backOffBlock || 0;
   }
 
-  async listen() {
+  async run() {
     await this.eventStore.connect();
     await this.producer.connect();
 
-    listenBlockchain(this.rpc, this.blockPerSecond, this.delayBlock, this.backOffBlock, this.eventStore, this.producer);
+    listenBlockchain({
+      type: this.type,
+      rpc: this.rpc,
+      blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
+      delayBlock: this.delayBlock,
+      backOffBlock: this.backOffBlock,
+      eventStore: this.eventStore,
+      producer: this.producer
+    });
 
     if (this.httpPort) {
       listenHTTP(this.httpPort, this.eventStore);
     }
+  }
+
+  async listen() {
+    await this.eventStore.connect();
+    await this.producer.connect();
+
+    listenBlockchain({
+      type: this.type,
+      rpc: this.rpc,
+      blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
+      delayBlock: this.delayBlock,
+      backOffBlock: this.backOffBlock,
+      eventStore: this.eventStore,
+      producer: this.producer
+    });
+  }
+
+  async api() {
+    await this.eventStore.connect();
+
+    if (!this.httpPort) {
+      throw new Error('http port is required');
+    }
+
+    listenHTTP(this.httpPort, this.eventStore);
   }
 }
 

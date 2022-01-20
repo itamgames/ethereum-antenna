@@ -129,15 +129,32 @@ async function syncer(contract: ContractSchema, rpc: string, delayBlock: number,
   }
 }
 
-async function listenBlockchain(rpc: string, blockPerSecond: number, delayBlock: number, backOffBlock: number, eventStore: IEventStore, producer: IProducer) {
+type ListenBlockChainType = {
+  type: 'standalone' | 'depend';
+  rpc: string;
+  blockPerSecond?: number;
+  delayBlock: number;
+  backOffBlock: number;
+  eventStore: IEventStore;
+  producer: IProducer;
+}
+
+async function listenBlockchain({ type, rpc, blockPerSecond, delayBlock, backOffBlock, eventStore, producer }: ListenBlockChainType) {
   const contracts = await eventStore.getContracts();
 
-  cron.schedule(`*/${blockPerSecond} * * * * *`, async () => {
+  if (type === 'standalone') {
+    cron.schedule(`*/${blockPerSecond} * * * * *`, async () => {
+      contracts.forEach(async (contract) => {
+        const atomic = Atomic(syncer, contract.address);
+        await atomic.run(contract, rpc, delayBlock, backOffBlock, eventStore, producer);
+      });
+    });
+  } else {
     contracts.forEach(async (contract) => {
       const atomic = Atomic(syncer, contract.address);
       await atomic.run(contract, rpc, delayBlock, backOffBlock, eventStore, producer);
     });
-  })
+  }
 }
 
 export default listenBlockchain;
