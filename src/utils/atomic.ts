@@ -27,7 +27,7 @@ class Job {
 
 const jobs: Record<string, Job> = {};
 
-export default (func: Function, key?: string) => {
+export function Atomic(func: Function, key?: string) {
   key = key || func.name;
   if (jobs[key]) {
     return jobs[key];

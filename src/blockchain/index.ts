@@ -1,10 +1,8 @@
 import { id } from '@ethersproject/hash';
 import { Contract as ContractType } from 'ethers';
-import cron from 'node-cron';
 import { AbiItem, Contract as ContractSchema, IEventStore } from '../eventStore/interface';
 import { IProducer, QueueMessage } from '../producer/interface';
-import { ethersProvider, Contract, bigNumberToString } from '../../src/utils';
-import Atomic from '../utils/atomic';
+import { Atomic, ethersProvider, Contract, bigNumberToString, sleep } from '../utils';
 import { Provider } from '@ethersproject/providers';
 import asyncPool from "tiny-async-pool";
 
@@ -97,12 +95,14 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, even
       let syncBlock = contract.events.reduce((acc, cur) => Math.min(acc, cur.trackedBlock), lastBlockNumber);
       let fromBlock = syncBlock;
       do {
-        let messages: QueueMessage[] = [];
         try {
           const arrays = Array(backOffBlock).fill(0).map((_, index) => fromBlock - backOffBlock + index);
           for (const blockNumber of arrays) {
+            let messages: QueueMessage[] = [];
             const trackingBlock = blockNumber + backOffBlock;
-            const sortBy = contract.events.map((evt) => evt.format.split('(')[0]);
+            if (trackingBlock > lastBlockNumber) {
+              break;
+            }
             await Promise.all(contract.events.map(async (event) => {
               if (event.trackedBlock > syncBlock) {
                 return;
@@ -113,6 +113,7 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, even
               if (result) {
                 messages = messages.concat(result);
               }
+              const sortBy = contract.events.map((evt) => evt.abi.name);
               const sortByObject = sortBy.reduce((a: Record<string, number>,c,i) => {
                 a[c] = i
                 return a
@@ -154,7 +155,7 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, even
               const trackingBlock = blockNumber + backOffBlock;
               // log for [blocknumber, event]
               // console.log(trackingBlock, event.abi.name);
-              const sortBy = contract.events.map((evt) => evt.format.split('(')[0]);
+              const sortBy = contract.events.map((evt) => evt.abi.name);
               const result = await query({ blockNumber, lastBlockNumber, backOffBlock, eventContract, provider, event, contractAddress, options: contract.options });
               let messages: QueueMessage[] = [];
               if (result) {
@@ -194,37 +195,29 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, even
 }
 
 type ListenBlockChainType = {
-  type: 'standalone' | 'depend';
   eventSync?: boolean;
   rpc: string;
-  blockPerSecond?: number;
   delayBlock: number;
   backOffBlock: number;
   eventStore: IEventStore;
   producer: IProducer;
 }
 
-async function listenBlockchain({ type, eventSync, rpc, blockPerSecond, delayBlock, backOffBlock, eventStore, producer }: ListenBlockChainType) {
-  const contracts = await eventStore.getContracts();
+async function listenBlockchain({ eventSync, rpc, delayBlock, backOffBlock, eventStore, producer }: ListenBlockChainType) {
+  async function run() {
+    console.log('run');
+    const contracts = await eventStore.getContracts();
 
-  if (type === 'standalone') {
-    cron.schedule(`*/${blockPerSecond} * * * * *`, async () => {
-      contracts.forEach(async (contract) => {
-        const atomic = Atomic(syncer, contract.address);
-        await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
-      });
+    await Promise.all(contracts.map(async (contract) => {
+      const atomic = Atomic(syncer, contract.address);
+      await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
+    })).catch(async(err) => {
+      await sleep(3000);
+      console.error(err);
     });
-  } else {
-    async function run() {
-      console.log('run');
-      await Promise.all(contracts.map(async (contract) => {
-        const atomic = Atomic(syncer, contract.address);
-        await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
-      }));
-    }
-    while (true) {
-      await run();
-    }
+  }
+  while (true) {
+    await run();
   }
 }
 
