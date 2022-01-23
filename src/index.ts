@@ -10,7 +10,6 @@ export type Config = {
   producer: BroadcastConfig;
   eventSync?: boolean;
   rpc: string;
-  blockPerSecond?: number;
   delayBlock?: number;
   backOffBlock?: number;
   httpPort?: number;
@@ -21,20 +20,18 @@ class EthereumAntenna {
   producer: IProducer;
   rpc: string;
   eventSync?: boolean;
-  blockPerSecond?: number;
   delayBlock: number;
   backOffBlock: number;
-  httpPort: number | undefined;
+  httpPort: number;
 
   constructor(config: Config) {
     this.eventStore = createEventStoreInstance(config.eventStore);
     this.producer = createBroadcastInstance(config.producer);
     this.rpc = config.rpc;
     this.eventSync = config.eventSync;
-    this.blockPerSecond = config.blockPerSecond;
-    this.httpPort = config.httpPort;
+    this.httpPort = config.httpPort || 3000;
     this.delayBlock = config.delayBlock || 0;
-    this.backOffBlock = config.backOffBlock || 0;
+    this.backOffBlock = config.backOffBlock || 50;
   }
 
   async run() {
