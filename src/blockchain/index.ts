@@ -6,6 +6,7 @@ import { IProducer, QueueMessage } from '../producer/interface';
 import { ethersProvider, Contract, bigNumberToString } from '../../src/utils';
 import Atomic from '../utils/atomic';
 import { Provider } from '@ethersproject/providers';
+import asyncPool from "tiny-async-pool";
 
 const blockDates: Record<number, Date> = {};
 
@@ -76,13 +77,14 @@ async function query ({ blockNumber, lastBlockNumber, backOffBlock, eventContrac
 type SyncType = {
   contract: ContractSchema;
   rpc: string;
+  eventSync?: boolean;
   delayBlock: number;
   backOffBlock: number;
   eventStore: IEventStore;
   producer: IProducer;
 }
 
-async function syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, producer }: SyncType) {
+async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer }: SyncType) {
   try {
     const ABI = contract.events.reduce((acc: AbiItem[], evt) => acc.concat(evt.abi), []);
     const contractAddress = contract.address;
@@ -91,48 +93,101 @@ async function syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, pro
     const currentBlockNumber = await provider.getBlockNumber();
     // HACK: prevent event missing
     const lastBlockNumber = currentBlockNumber - delayBlock;
-    let fromBlock = contract.trackedBlock;
-
-    do {
-      let messages: QueueMessage[] = [];
-      try {
-        const arrays = Array(backOffBlock).fill(0).map((_, index) => fromBlock - backOffBlock + index);
-        for (const blockNumber of arrays) {
-          const trackingBlock = blockNumber + backOffBlock;
-          const sortBy = contract.events.map((evt) => evt.format.split('(')[0]);
-          await Promise.all(contract.events.map(async (event) => {
-            const result = await query({ blockNumber, lastBlockNumber, backOffBlock, eventContract, provider, event, contractAddress, options: contract.options });
-            if (result) {
-              messages = messages.concat(result);
-            }
-          }));
-          const sortByObject = sortBy.reduce((a: Record<string, number>,c,i) => {
-            a[c] = i
-            return a
-          }, {});
-          if (messages.length > 0) {
-            messages.sort((a, b) => sortByObject[a.event] - sortByObject[b.event]);
-            // log for [blocknumber, events, count]
-            console.log(
-              trackingBlock,
-              messages.map((msg) => (msg.event)).filter((elem, index, self) => self.indexOf(elem) === index),
-              messages.map((msg) => (msg.options?.callbackURL)).filter((elem, index, self) => self.indexOf(elem) === index),
-              messages.length
-            );
-            await producer.broadcast(messages, 10);
-            messages = [];
+    if (eventSync) {
+      let syncBlock = contract.events.reduce((acc, cur) => Math.min(acc, cur.trackedBlock), lastBlockNumber);
+      let fromBlock = syncBlock;
+      do {
+        let messages: QueueMessage[] = [];
+        try {
+          const arrays = Array(backOffBlock).fill(0).map((_, index) => fromBlock - backOffBlock + index);
+          for (const blockNumber of arrays) {
+            const trackingBlock = blockNumber + backOffBlock;
+            const sortBy = contract.events.map((evt) => evt.format.split('(')[0]);
+            await Promise.all(contract.events.map(async (event) => {
+              if (event.trackedBlock > syncBlock) {
+                return;
+              }
+              // log for [blocknumber, event]
+              // console.log(trackingBlock, event.abi.name);
+              const result = await query({ blockNumber, lastBlockNumber, backOffBlock, eventContract, provider, event, contractAddress, options: contract.options });
+              if (result) {
+                messages = messages.concat(result);
+              }
+              const sortByObject = sortBy.reduce((a: Record<string, number>,c,i) => {
+                a[c] = i
+                return a
+              }, {});
+              if (messages.length > 0) {
+                messages.sort((a, b) => sortByObject[a.event] - sortByObject[b.event]);
+                // log for [blocknumber, events, count]
+                console.log(
+                  trackingBlock,
+                  messages.map((msg) => (msg.event)).filter((elem, index, self) => self.indexOf(elem) === index),
+                  messages.map((msg) => (msg.options?.callbackURL)).filter((elem, index, self) => self.indexOf(elem) === index),
+                  messages.length
+                );
+                await producer.broadcast(messages, 10);
+                messages = [];
+              }
+              await eventStore.updateBlock(contractAddress, event.abi.name, Math.min(trackingBlock, lastBlockNumber));
+              if (syncBlock < trackingBlock) {
+                syncBlock = trackingBlock;
+              }
+            }));
           }
-          await eventStore.updateBlock(contractAddress, Math.min(trackingBlock, lastBlockNumber));
+          fromBlock += backOffBlock;
+        } catch (err: any) {
+          if (!!err?.body && JSON.parse(err?.body)?.error?.message === 'too many requests') {
+            console.error(JSON.parse(err?.body)?.error?.message);
+          } else {
+            console.error(err);
+          }
         }
-      } catch (err: any) {
-        if (!!err?.body && JSON.parse(err?.body)?.error?.message === 'too many requests') {
-          console.error(JSON.parse(err?.body)?.error?.message);
-        } else {
-          console.error(err);
-        }
-      }
-      fromBlock += backOffBlock;
-    } while (fromBlock <= lastBlockNumber);
+      } while (fromBlock <= lastBlockNumber);
+    } else {
+      await Promise.all(contract.events.map(async (event) => {
+        let fromBlock = event.trackedBlock;
+        do {
+          try {
+            const arrays = Array(backOffBlock).fill(0).map((_, index) => fromBlock - backOffBlock + index);
+            await asyncPool(10, arrays, async (blockNumber) => {
+              const trackingBlock = blockNumber + backOffBlock;
+              // log for [blocknumber, event]
+              // console.log(trackingBlock, event.abi.name);
+              const sortBy = contract.events.map((evt) => evt.format.split('(')[0]);
+              const result = await query({ blockNumber, lastBlockNumber, backOffBlock, eventContract, provider, event, contractAddress, options: contract.options });
+              let messages: QueueMessage[] = [];
+              if (result) {
+                messages = messages.concat(result);
+              }
+              const sortByObject = sortBy.reduce((a: Record<string, number>,c,i) => {
+                a[c] = i
+                return a
+              }, {});
+              if (messages.length > 0) {
+                messages.sort((a, b) => sortByObject[a.event] - sortByObject[b.event]);
+                // log for [blocknumber, events, count]
+                console.log(
+                  trackingBlock,
+                  messages.map((msg) => (msg.event)).filter((elem, index, self) => self.indexOf(elem) === index),
+                  messages.map((msg) => (msg.options?.callbackURL)).filter((elem, index, self) => self.indexOf(elem) === index),
+                  messages.length
+                );
+                await producer.broadcast(messages, 10);
+              }
+            });
+            fromBlock += backOffBlock;
+            await eventStore.updateBlock(contractAddress, event.abi.name, Math.min(fromBlock, lastBlockNumber));
+          } catch (err: any) {
+            if (!!err?.body && JSON.parse(err?.body)?.error?.message === 'too many requests') {
+              console.error(JSON.parse(err?.body)?.error?.message);
+            } else {
+              console.error(err);
+            }
+          }
+        } while (fromBlock <= lastBlockNumber);
+      }));
+    }
   } catch (err) {
     console.error('contract loop error: ', err);
   }
@@ -140,6 +195,7 @@ async function syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, pro
 
 type ListenBlockChainType = {
   type: 'standalone' | 'depend';
+  eventSync?: boolean;
   rpc: string;
   blockPerSecond?: number;
   delayBlock: number;
@@ -148,20 +204,27 @@ type ListenBlockChainType = {
   producer: IProducer;
 }
 
-async function listenBlockchain({ type, rpc, blockPerSecond, delayBlock, backOffBlock, eventStore, producer }: ListenBlockChainType) {
+async function listenBlockchain({ type, eventSync, rpc, blockPerSecond, delayBlock, backOffBlock, eventStore, producer }: ListenBlockChainType) {
   const contracts = await eventStore.getContracts();
 
   if (type === 'standalone') {
     cron.schedule(`*/${blockPerSecond} * * * * *`, async () => {
       contracts.forEach(async (contract) => {
         const atomic = Atomic(syncer, contract.address);
-        await atomic.run({ contract, rpc, delayBlock, backOffBlock, eventStore, producer });
+        await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
       });
     });
   } else {
-    await Promise.all(contracts.map(async (contract) => {
-      await syncer({ contract, rpc, delayBlock, backOffBlock, eventStore, producer });
-    }));
+    async function run() {
+      console.log('run');
+      await Promise.all(contracts.map(async (contract) => {
+        const atomic = Atomic(syncer, contract.address);
+        await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
+      }));
+    }
+    while (true) {
+      await run();
+    }
   }
 }
 

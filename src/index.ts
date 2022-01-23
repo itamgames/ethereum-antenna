@@ -9,6 +9,7 @@ export type Config = {
   eventStore: EventStoreConfig;
   producer: BroadcastConfig;
   type: 'standalone' | 'depend';
+  eventSync?: boolean;
   rpc: string;
   blockPerSecond?: number;
   delayBlock?: number;
@@ -21,6 +22,7 @@ class EthereumAntenna {
   producer: IProducer;
   rpc: string;
   type: 'standalone' | 'depend';
+  eventSync?: boolean;
   blockPerSecond?: number;
   delayBlock: number;
   backOffBlock: number;
@@ -31,6 +33,7 @@ class EthereumAntenna {
     this.producer = createBroadcastInstance(config.producer);
     this.rpc = config.rpc;
     this.type = config.type;
+    this.eventSync = config.eventSync;
     this.blockPerSecond = config.blockPerSecond;
     this.httpPort = config.httpPort;
     this.delayBlock = config.delayBlock || 0;
@@ -43,6 +46,7 @@ class EthereumAntenna {
 
     await listenBlockchain({
       type: this.type,
+      eventSync: this.eventSync,
       rpc: this.rpc,
       blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
       delayBlock: this.delayBlock,
@@ -62,6 +66,7 @@ class EthereumAntenna {
 
     await listenBlockchain({
       type: this.type,
+      eventSync: this.eventSync,
       rpc: this.rpc,
       blockPerSecond: this.type === 'standalone' ? this.blockPerSecond : undefined,
       delayBlock: this.delayBlock,

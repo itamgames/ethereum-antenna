@@ -9,7 +9,7 @@ function listenHTTP(port: number, eventStore: IEventStore) {
   // create contracts
   router.post('/contracts', async (ctx) => {
     const { address, abi, trackedBlock, options } = ctx.request.body;
-    await eventStore.addEvent({ address, abi, trackedBlock, options });
+    await eventStore.addContract({ address, abi, trackedBlock, options });
     ctx.status = constants.HTTP_STATUS_NO_CONTENT;
   });
 
@@ -17,20 +17,21 @@ function listenHTTP(port: number, eventStore: IEventStore) {
   router.put('/contracts/:address', async (ctx) => {
     const { address } = ctx.params;
     const { abi, trackedBlock, options } = ctx.request.body;
-    await eventStore.updateEvent({ address, abi, trackedBlock, options });
+    await eventStore.updateContract({ address, abi, trackedBlock, options });
     ctx.status = constants.HTTP_STATUS_NO_CONTENT;
   });
 
   // delete contracts
   router.delete('/contracts/:address', async (ctx) => {
     const { address } = ctx.params;
-    await eventStore.removeEvent(address);
+    await eventStore.removeContract(address);
     ctx.status = constants.HTTP_STATUS_NO_CONTENT;
   });
 
   // get contracts
   router.get('/contracts', async (ctx) => {
-    ctx.body = await eventStore.getContracts();
+    const { address } = ctx.query;
+    ctx.body = await eventStore.getContracts(address as string);
     ctx.status = constants.HTTP_STATUS_OK;
   });
 

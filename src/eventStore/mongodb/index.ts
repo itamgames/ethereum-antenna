@@ -1,5 +1,5 @@
 import { connect } from 'mongoose';
-import { IEventStore, EventStoreConfig, AbiItem, Event } from '../interface';
+import { IEventStore, EventStoreConfig, Event } from '../interface';
 import { ContractModel } from './contract';
 
 export class EventStoreMongoDB implements IEventStore {
@@ -14,23 +14,23 @@ export class EventStoreMongoDB implements IEventStore {
     await connect(this.config.uri, this.config.connectionOptions);
   }
 
-  async addEvent({ address, abi, trackedBlock, options }: Event) {
+  async addContract({ address, abi, trackedBlock, options }: Event) {
     const event = await ContractModel.findOne({ address });
     if (event) {
       throw Error(`Event ${address} already exists`);
     }
-    const contract = new ContractModel({ address, trackedBlock, options });
+    const contract = new ContractModel({ address, options });
     if (Array.isArray(abi)) {
       const eventNames = abi.map(item => item.name);
       const parameters = abi.map(item => item.inputs?.map(input => input.type ));
-      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index] }));
+      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index], trackedBlock: trackedBlock ?? 0 }));
     } else {
-      contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi }];
+      contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi, trackedBlock: trackedBlock ?? 0 }];
     }
     await contract.save();
   }
 
-  async updateEvent({ address, abi, trackedBlock, options }: Partial<Event>) {
+  async updateContract({ address, abi, trackedBlock, options }: Partial<Event>) {
     const contract = await ContractModel.findOne({ address });
     if (!contract) {
       throw Error(`Event ${address} does not exist`);
@@ -38,14 +38,11 @@ export class EventStoreMongoDB implements IEventStore {
     if (Array.isArray(abi)) {
       const eventNames = abi.map(item => item.name);
       const parameters = abi.map(item => item.inputs?.map(input => input.type ));
-      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index] }));
+      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index], trackedBlock: trackedBlock ?? 0 }));
     } else {
       if (abi) {
-        contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi }];
+        contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi, trackedBlock: trackedBlock ?? 0 }];
       }
-    }
-    if (trackedBlock) {
-      contract.trackedBlock = trackedBlock;
     }
     if (options) {
       contract.options = options;
@@ -53,11 +50,11 @@ export class EventStoreMongoDB implements IEventStore {
     await contract.save();
   }
 
-  async updateBlock(address: string, blockNumber: number) {
-    await ContractModel.findOneAndUpdate({ address }, { $set: { trackedBlock: blockNumber } });
+  async updateBlock(address: string, eventName: string, blockNumber: number) {
+    await ContractModel.findOneAndUpdate({ address, 'events.abi.name': eventName }, { $set: { 'events.$.trackedBlock': blockNumber } });
   }
 
-  async removeEvent(eventId: string) {
+  async removeContract(eventId: string) {
     await ContractModel.deleteOne({ _id: eventId });
   }
 

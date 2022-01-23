@@ -11,12 +11,12 @@ export type EventStoreConfig = MongoConfig;
 interface ContractEvent {
   format: string;
   abi: AbiItem;
+  trackedBlock: number;
 }
 
 export interface Contract {
   address: string;
   events: ContractEvent[];
-  trackedBlock: number;
   options?: Record<string, unknown>;
 }
 
@@ -29,10 +29,10 @@ export interface Event {
 
 export interface IEventStore {
   connect(): Promise<void>;
-  addEvent({ address, abi, trackedBlock, options }: Event): Promise<void>;
-  updateBlock(address: string, blockNumber: number): Promise<void>;
-  updateEvent({ address, abi, trackedBlock, options }: Partial<Event>): Promise<void>;
-  removeEvent(address: string): Promise<void>;
+  addContract({ address, abi, trackedBlock, options }: Event): Promise<void>;
+  updateContract({ address, abi, trackedBlock, options }: Partial<Event>): Promise<void>;
+  updateBlock(address: string, eventName: string, blockNumber: number): Promise<void>;
+  removeContract(address: string): Promise<void>;
   getContracts(address?: string): Promise<Contract[]>;
 }
 
