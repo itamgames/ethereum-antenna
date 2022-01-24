@@ -4,7 +4,7 @@ import Router from '@koa/router';
 import { constants } from "http2";
 import { IEventStore } from '../eventStore/interface';
 
-function listenHTTP(port: number, eventStore: IEventStore) {
+export function initializeApp(eventStore: IEventStore) {
   const router = new Router();
   // create contracts
   router.post('/contracts', async (ctx) => {
@@ -39,8 +39,13 @@ function listenHTTP(port: number, eventStore: IEventStore) {
   app.use(bodyParser());
   app.use(router.routes());
   app.use(router.allowedMethods());
-  app.listen(port, () => console.log(`HTTP server started on port: ${port}`));
+
   return app;
+}
+
+function listenHTTP(port: number, eventStore: IEventStore) {
+  const app = initializeApp(eventStore);
+  app.listen(port, () => console.log(`HTTP server started on port: ${port}`));
 }
 
 export default listenHTTP;

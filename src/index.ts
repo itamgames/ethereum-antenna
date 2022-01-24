@@ -1,4 +1,4 @@
-import listenHTTP from './http';
+import listenHTTP, { initializeApp } from './http';
 import listenBlockchain from './blockchain';
 import { createEventStoreInstance } from './eventStore';
 import { createBroadcastInstance } from './producer';
@@ -66,12 +66,14 @@ class EthereumAntenna {
     });
   }
 
-  async api() {
+  async getApp() {
     await this.eventStore.connect();
 
-    if (!this.httpPort) {
-      throw new Error('http port is required');
-    }
+    return initializeApp(this.eventStore);
+  }
+
+  async api() {
+    await this.eventStore.connect();
 
     return listenHTTP(this.httpPort, this.eventStore);
   }
