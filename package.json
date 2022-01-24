@@ -13,7 +13,9 @@
   "scripts": {
     "start": "ts-node scripts/antenna.ts",
     "types": "rimraf dist && tsc",
-    "build": "yarn types && node scripts/build.mjs"
+    "build": "yarn types && node scripts/build.mjs",
+    "prepublish": "yarn build",
+    "publish:canary": "yarn build && yarn publish --tag canary"
   },
   "devDependencies": {
     "@anatine/esbuild-decorators": "^0.2.18",
