@@ -2,7 +2,7 @@
   "name": "ethereum-antenna",
   "author": "ITAM",
   "license": "MIT",
-  "version": "0.0.10",
+  "version": "0.0.10-89d4bf8f",
   "homepage": "https://github.com/itamgames/ethereum-antenna#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,9 +36,9 @@
     "walkdir": "^0.4.1"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.48.0",
     "@koa/router": "^10.1.1",
     "@typegoose/typegoose": "^9.3.1",
-    "aws-sdk": "^2.1048.0",
     "dotenv": "^10.0.0",
     "ethers": "^5.5.2",
     "koa": "^2.13.4",
