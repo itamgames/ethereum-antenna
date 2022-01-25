@@ -28,6 +28,8 @@ Some environment variables used in code are not opened to repository.
 ```ts
 import EthereumAntenna from 'ethereum-antenna';
 
+import 'dotenv/config'; // In case of using environment variables such as `AWS_ACCESS_KEY_ID`;
+
 const antenna = new EthereumAntenna({
   eventStore: {
     type: 'mongodb',
@@ -36,8 +38,6 @@ const antenna = new EthereumAntenna({
   producer: {
     type: 'sqs',
     region: <AWS_REGION>,
-    accessKeyId: <ACCESS_KEY_ID>,
-    secretAccessKey: <SECRET_ACCESS_KEY>,
     queueUrl: <BLOCKCHAIN_QUEUE_URL>,
   },
   rpc: <BLOCKCHAIN_RPC_URL>,
@@ -59,17 +59,18 @@ To run `Ethereum Antenna`, you should add parameters to create instance. Below i
 |producer.type|`sqs`|true||type of event publisher|
 |producer.fifo|boolean|false|undefined|`true` if event queue is `FIFO` queue|
 |producer.region|string|true||region of event publisher, currently only affected on AWS|
-|producer.accessKeyId|string|true||access key id of event publisher|
-|producer.secretAccessKey|string|true||secret access key of event publisher|
 |producer.queueUrl|string|true||queue url of event publisher|
 |rpc|string|true||url of EVM chain RPC|
 |delayBlock|string|false|0|distance from latest block number|
 |backOffBlock|string|false|50|range from specific block number|
 |httpPort|string|false|3000|http port when running instance with api|
 
-
 If `eventSync` is true, event listening and broadcasting will occur synchronous. If some events are delayed from other events, wait until delayed events follow event block.
 If `eventSync` is false, event listening asynchronously and event query parallelly.
+
+> Notice:
+If you have to use AWS SQS on outside of AWS infrastructure, you **SHOULD WRITE** `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. ([LINK](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-environment.html))
+If you're using AWS SQS on infrastructure, follow AWS guide to get grant to send SQS Messages.
 
 ### Methods
 `Ethereum Antenna` includes two features. First one is listening event from blockchain. Another one helps event structure that uses on block event listener by handling it with REST api.
@@ -85,3 +86,4 @@ Below list may change due to our direction of development
 
 * create test cases
 * add api interface for contract listening
+* add contribution guide
