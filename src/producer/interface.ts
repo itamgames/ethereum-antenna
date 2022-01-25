@@ -3,8 +3,6 @@ type SQSConfig = {
   fifo?: boolean;
   queueUrl: string;
   region?: string;
-  accessKeyId: string;
-  secretAccessKey: string;
   batchSize?: number;
 };
 
