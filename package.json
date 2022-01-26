@@ -2,7 +2,7 @@
   "name": "ethereum-antenna",
   "author": "ITAM",
   "license": "MIT",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "homepage": "https://github.com/itamgames/ethereum-antenna#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
