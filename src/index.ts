@@ -1,35 +1,36 @@
-import listenHTTP, { initializeApp } from './http';
 import listenBlockchain from './blockchain';
 import { createEventStoreInstance } from './eventStore';
 import { createBroadcastInstance } from './producer';
+import { createHttpInstance } from './http';
 import { EventStoreConfig, IEventStore } from './eventStore/interface';
 import { BroadcastConfig, IProducer } from './producer/interface';
+import { HttpConfig, IHttp } from './http/interface';
 
 export type Config = {
   eventStore: EventStoreConfig;
   producer: BroadcastConfig;
+  http: HttpConfig;
   eventSync?: boolean;
   rpc: string;
   delayBlock?: number;
   backOffBlock?: number;
-  httpPort?: number;
 };
 
 class EthereumAntenna {
   eventStore: IEventStore;
   producer: IProducer;
+  http: IHttp;
   rpc: string;
   eventSync?: boolean;
   delayBlock: number;
   backOffBlock: number;
-  httpPort: number;
 
   constructor(config: Config) {
     this.eventStore = createEventStoreInstance(config.eventStore);
     this.producer = createBroadcastInstance(config.producer);
+    this.http = createHttpInstance(config.http);
     this.rpc = config.rpc;
     this.eventSync = config.eventSync;
-    this.httpPort = config.httpPort || 3000;
     this.delayBlock = config.delayBlock || 0;
     this.backOffBlock = config.backOffBlock || 50;
   }
@@ -47,9 +48,7 @@ class EthereumAntenna {
       producer: this.producer
     });
 
-    if (this.httpPort) {
-      await listenHTTP(this.httpPort, this.eventStore);
-    }
+    await this.http.listenHTTP({ eventStore: this.eventStore });
   }
 
   async listen() {
@@ -69,13 +68,13 @@ class EthereumAntenna {
   async getApp() {
     await this.eventStore.connect();
 
-    return initializeApp(this.eventStore);
+    return this.http.initializeApp({ eventStore: this.eventStore });
   }
 
   async api() {
     await this.eventStore.connect();
 
-    return listenHTTP(this.httpPort, this.eventStore);
+    return this.http.listenHTTP({ eventStore: this.eventStore });
   }
 }
 
