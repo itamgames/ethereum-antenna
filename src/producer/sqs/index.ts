@@ -38,6 +38,7 @@ export class BroadcastSQS implements IProducer {
               contractAddress: message.contractAddress,
               event: message.event,
               params: message.params,
+              options: message.options,
               blockNumber: message.blockNumber,
               blockCreatedAt: message.blockCreatedAt,
             }),
