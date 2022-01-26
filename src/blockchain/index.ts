@@ -146,7 +146,7 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, even
         }
       } while (fromBlock <= lastBlockNumber);
     } else {
-      await Promise.all(contract.events.map(async (event) => {
+      await Promise.race(contract.events.map(async (event) => {
         let fromBlock = event.trackedBlock;
         do {
           try {
@@ -208,16 +208,16 @@ async function listenBlockchain({ eventSync, rpc, delayBlock, backOffBlock, even
     console.log('run');
     const contracts = await eventStore.getContracts();
 
-    await Promise.all(contracts.map(async (contract) => {
+    await Promise.race(contracts.map(async (contract) => {
       const atomic = Atomic(syncer, contract.address);
       await atomic.run({ contract, eventSync, rpc, delayBlock, backOffBlock, eventStore, producer });
     })).catch(async(err) => {
-      await sleep(3000);
       console.error(err);
     });
   }
   while (true) {
     await run();
+    await sleep(3000);
   }
 }
 
