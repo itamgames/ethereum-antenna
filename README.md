@@ -40,6 +40,9 @@ const antenna = new EthereumAntenna({
     region: <AWS_REGION>,
     queueUrl: <BLOCKCHAIN_QUEUE_URL>,
   },
+  http: {
+    type: 'koa',
+  },
   rpc: <BLOCKCHAIN_RPC_URL>,
 });
 
@@ -60,10 +63,12 @@ To run `Ethereum Antenna`, you should add parameters to create instance. Below i
 |producer.fifo|boolean|false|undefined|`true` if event queue is `FIFO` queue|
 |producer.region|string|true||region of event publisher, currently only affected on AWS|
 |producer.queueUrl|string|true||queue url of event publisher|
+|http.type|`koa`|true||type of http service|
+|http.port|number|false|3000|port number of http service|
+|http.prefix|string|false||prefix of routing url|
 |rpc|string|true||url of EVM chain RPC|
 |delayBlock|string|false|0|distance from latest block number|
 |backOffBlock|string|false|50|range from specific block number|
-|httpPort|string|false|3000|http port when running instance with api|
 
 If `eventSync` is true, event listening and broadcasting will occur synchronous. If some events are delayed from other events, wait until delayed events follow event block.
 If `eventSync` is false, event listening asynchronously and event query parallelly.
