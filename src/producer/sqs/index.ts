@@ -17,12 +17,12 @@ export class BroadcastSQS implements IProducer {
     });
   }
 
-  async broadcast(msgs: QueueMessage[], chunkSize: number = 10) {
+  async broadcast(msgs: QueueMessage[], chunkSize: number) {
     if (!this.sqs) {
       await this.connect();
     }
 
-    const chunkedMsgs = arrayChunk(msgs, chunkSize);
+    const chunkedMsgs = arrayChunk(msgs, chunkSize = this.config.batchSize || 10);
 
     for (const chunk of chunkedMsgs) {
       try {
