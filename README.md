@@ -67,11 +67,15 @@ To run `Ethereum Antenna`, you should add parameters to create instance. Below i
 |http.port|number|false|3000|port number of http service|
 |http.prefix|string|false||prefix of routing url|
 |rpc|string|true||url of EVM chain RPC|
-|delayBlock|string|false|0|distance from latest block number|
-|backOffBlock|string|false|50|range from specific block number|
+|concurrency|number|false|10|async query limit when using async eventSync|
+|blockPerSecond|number|false|0|delay after each query|
+|delayBlock|number|false|0|distance from latest block number|
+|backOffBlock|number|false|50|distance from specific block number|
+|threshold|number|false|50|range from specific block number|
 
 If `eventSync` is true, event listening and broadcasting will occur synchronous. If some events are delayed from other events, wait until delayed events follow event block.
-If `eventSync` is false, event listening asynchronously and event query parallelly.
+If `eventSync` is false, event listening asynchronously and event query concurrently.
+And `concurrency` will affect only `eventSync` is false.
 
 > Notice:
 If you have to use AWS SQS on outside of AWS infrastructure, you **SHOULD WRITE** `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. ([LINK](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-environment.html))
