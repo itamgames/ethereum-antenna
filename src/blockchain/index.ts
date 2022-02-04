@@ -143,7 +143,15 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, thre
         a[c] = i
         return a
       }, {});
-      messages.sort((a, b) => {
+      const uniqueKeys = [...new Set(messages.map(item => item.id))]
+      const uniques = messages.reduce((acc: Record<string, QueueMessage>, cur) => {
+        if (acc[cur.id]) {
+          return acc;
+        }
+        acc[cur.id] = cur;
+        return acc;
+      }, {});
+      const sorted = Object.values(uniques).sort((a, b) => {
         if (a.blockNumber < b.blockNumber) return 1;
         if (a.blockNumber > b.blockNumber) return -1;
 
@@ -153,12 +161,12 @@ async function syncer({ contract, eventSync, rpc, delayBlock, backOffBlock, thre
       });
       // log for [blocknumber, events, count]
       console.log(
-        messages.map((msg) => (msg.blockNumber)).reduce((acc, cur) => Math.min(acc, cur), Infinity),
-        messages.map((msg) => (msg.event)).filter((elem, index, self) => self.indexOf(elem) === index),
-        messages.map((msg) => (msg.options?.callbackURL)).filter((elem, index, self) => self.indexOf(elem) === index),
-        messages.length
+        sorted.map((msg) => (msg.blockNumber)).reduce((acc, cur) => Math.min(acc, cur), Infinity),
+        sorted.map((msg) => (msg.event)).filter((elem, index, self) => self.indexOf(elem) === index),
+        sorted.map((msg) => (msg.options?.callbackURL)).filter((elem, index, self) => self.indexOf(elem) === index),
+        sorted.length
       );
-      await producer.broadcast(messages);
+      await producer.broadcast(sorted);
       messages = [];
     }
   } catch (err) {
