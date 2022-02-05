@@ -26,7 +26,7 @@ export class EventStoreMongoDB implements IEventStore {
   }
 
   async removeEvent(contractAddress: string, eventName: string): Promise<void> {
-    const antenna = await Antenna.findOne({ address: contractAddress });
+    const antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
       throw Error('invalid contract address');
     }
@@ -51,7 +51,7 @@ export class EventStoreMongoDB implements IEventStore {
   }
 
   async getContract(contractAddress: string): Promise<Contract> {
-    const contract = await Antenna.findOne({ address: contractAddress }).lean();
+    const contract = await Antenna.findOne({ contractAddress }).lean();
     if (!contract) {
       throw Error('invalidr contract address');
     }
@@ -63,7 +63,7 @@ export class EventStoreMongoDB implements IEventStore {
     };
   }
 
-  async getContracts(contractAddress: string): Promise<Contract[]> {
+  async getContracts(): Promise<Contract[]> {
     const contracts = await Antenna.find().lean();
     return contracts.map((contract) => ({
       contractAddress: contract.contractAddress,

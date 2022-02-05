@@ -4,9 +4,7 @@ import { Contract, IEventStore } from '../eventStore/interface';
 import { IProducer, QueueMessage } from '../producer/interface';
 
 type ListenBlockChainType = {
-  eventSync?: boolean;
   rpc: string;
-  concurrency?: number;
   delayBlock: number;
   blockPerSecond: number;
   backOffBlock: number;
@@ -30,19 +28,20 @@ async function listenBlockchain({
     web3.eth.getBlockNumber(),
   ]);
 
-  setTimeout(async function () {
-    currentBlockNumber = await web3.eth.getBlockNumber();
-  }, blockPerSecond * 1000);
-
   const trackedBlock: any = {};
   const blockTimestamp: any = {};
   const run = async (contract: Contract, web3ContractObj: Web3Contract) => {
+    const fromBlock = trackedBlock[contract.contractAddress] - backOffBlock;
     let toBlock = trackedBlock[contract.contractAddress] + threshold;
     if (toBlock > currentBlockNumber - delayBlock) {
       toBlock = currentBlockNumber - delayBlock - 1;
     }
+    if (fromBlock >= toBlock) {
+      return;
+    }
+
     const events = await web3ContractObj.getPastEvents('allEvents', {
-      fromBlock: trackedBlock[contract.contractAddress],
+      fromBlock,
       toBlock,
     });
 
@@ -81,7 +80,7 @@ async function listenBlockchain({
       contract.contractAddress,
     );
 
-    setTimeout(function () {
+    setInterval(function () {
       run(contract, contractObj);
     }, blockPerSecond * 1000);
   }
