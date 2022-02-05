@@ -8,32 +8,20 @@ type MongoConfig = {
 
 export type EventStoreConfig = MongoConfig;
 
-interface ContractEvent {
-  format: string;
-  abi: AbiItem;
-  trackedBlock: number;
-}
-
 export interface Contract {
-  address: string;
-  events: ContractEvent[];
-  options?: Record<string, unknown>;
-}
-
-export interface Event {
-  address: string;
-  abi: AbiItem[] | AbiItem;
-  trackedBlock?: number;
+  contractAddress: string;
+  abi: AbiItem[];
+  blockNumber?: number;
   options?: Record<string, unknown>;
 }
 
 export interface IEventStore {
   connect(): Promise<void>;
-  addContract({ address, abi, trackedBlock, options }: Event): Promise<void>;
-  updateContract({ address, abi, trackedBlock, options }: Partial<Event>): Promise<void>;
-  updateBlock(address: string, eventName: string, blockNumber: number): Promise<void>;
-  removeContract(address: string): Promise<void>;
-  getContracts(address?: string): Promise<Contract[]>;
+  addEvent(contractAddress: string, abi: AbiItem): Promise<void>;
+  removeEvent(contractAddress: string, eventName: string): Promise<void>;
+  updateBlock(contractAddress: string, blockNumber: number): Promise<void>;
+  getContract(contractAddress: string): Promise<Contract>;
+  getContracts(): Promise<Contract[]>;
 }
 
 export interface AbiItem {
