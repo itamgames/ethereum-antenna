@@ -29,8 +29,8 @@ async function listenBlockchain({
     web3.eth.getBlockNumber(),
   ]);
 
-  const trackedBlock: any = {};
-  const blockTimestamp: any = {};
+  const trackedBlock: Record<string, number> = {};
+  const blockTimestamp: Record<number, number> = {};
   const run = async (contract: Contract, web3ContractObj: Web3Contract) => {
     const fromBlock = trackedBlock[contract.contractAddress] - backOffBlock;
     let toBlock = trackedBlock[contract.contractAddress] + threshold;
@@ -50,11 +50,11 @@ async function listenBlockchain({
       events.map(async (event) => {
         if (!blockTimestamp[event.blockNumber]) {
           const block = await web3.eth.getBlock(event.blockNumber, false);
-          blockTimestamp[event.blockNumber] = block.timestamp;
+          blockTimestamp[event.blockNumber] = typeof block.timestamp === 'string' ? Number(block.timestamp) : block.timestamp;
         }
 
         return {
-          id: `${event.transactionHash}#${event.logIndex}`,
+          id: `${event.transactionHash}-${event.logIndex}`,
           transactionHash: event.transactionHash,
           logIndex: event.logIndex,
           contractAddress: contract.contractAddress,
