@@ -34,7 +34,7 @@ async function listenBlockchain({
     const fromBlock = trackedBlock[contract.contractAddress] - backOffBlock;
     let toBlock = trackedBlock[contract.contractAddress] + threshold;
     if (toBlock > currentBlockNumber - delayBlock) {
-      toBlock = currentBlockNumber - delayBlock - 1;
+      toBlock = currentBlockNumber - delayBlock;
     }
     if (fromBlock >= toBlock) {
       return;
