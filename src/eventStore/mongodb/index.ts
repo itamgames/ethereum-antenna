@@ -1,6 +1,6 @@
 import { connect } from 'mongoose';
-import { IEventStore, EventStoreConfig, Event } from '../interface';
-import { ContractModel } from './contract';
+import { IEventStore, EventStoreConfig, Contract, AbiItem } from '../interface';
+import { Antenna } from './antenna';
 
 export class EventStoreMongoDB implements IEventStore {
   config: EventStoreConfig;
@@ -9,58 +9,67 @@ export class EventStoreMongoDB implements IEventStore {
     this.config = config;
   }
 
-  async connect() {
-    // pass
+  async connect(): Promise<void> {
     await connect(this.config.uri, this.config.connectionOptions);
   }
 
-  async addContract({ address, abi, trackedBlock, options }: Event) {
-    const event = await ContractModel.findOne({ address });
-    if (event) {
-      throw Error(`Event ${address} already exists`);
+  async addEvent(contractAddress: string, abi: AbiItem): Promise<void> {
+    let antenna = await Antenna.findOne({ contractAddress });
+    if (!antenna) {
+      antenna = await Antenna.create({ contractAddress });
     }
-    const contract = new ContractModel({ address, options });
-    if (Array.isArray(abi)) {
-      const eventNames = abi.map(item => item.name);
-      const parameters = abi.map(item => item.inputs?.map(input => input.type ));
-      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index], trackedBlock: trackedBlock ?? 0 }));
-    } else {
-      contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi, trackedBlock: trackedBlock ?? 0 }];
-    }
-    await contract.save();
+
+    const arr = antenna.abi || [];
+    arr.push(abi);
+    antenna.abi = arr;
+    await antenna.save();
   }
 
-  async updateContract({ address, abi, trackedBlock, options }: Partial<Event>) {
-    const contract = await ContractModel.findOne({ address });
+  async removeEvent(contractAddress: string, eventName: string): Promise<void> {
+    const antenna = await Antenna.findOne({ contractAddress });
+    if (!antenna) {
+      throw Error('invalid contract address');
+    }
+
+    const event = antenna.abi.find((event) => event.name === eventName);
+    if (!event) {
+      throw Error('invalid event name');
+    }
+    antenna.abi = antenna.abi.splice(antenna.abi.indexOf(event), 1);
+    if (antenna.abi.length === 0) {
+      await antenna.deleteOne();
+    } else {
+      await antenna.save();
+    }
+  }
+
+  async updateBlock(
+    contractAddress: string,
+    blockNumber: number,
+  ): Promise<void> {
+    await Antenna.updateOne({ contractAddress }, { $set: { blockNumber } });
+  }
+
+  async getContract(contractAddress: string): Promise<Contract> {
+    const contract = await Antenna.findOne({ contractAddress }).lean();
     if (!contract) {
-      throw Error(`Event ${address} does not exist`);
+      throw Error('invalidr contract address');
     }
-    if (Array.isArray(abi)) {
-      const eventNames = abi.map(item => item.name);
-      const parameters = abi.map(item => item.inputs?.map(input => input.type ));
-      contract.events = eventNames.map((name, index) => ({ format: `${name}(${parameters[index]?.join(',')})`, abi: abi[index], trackedBlock: trackedBlock ?? 0 }));
-    } else {
-      if (abi) {
-        contract.events = [{ format: `${abi.name}(${abi.inputs?.map(input => ({ type: input.type, name: input.name }))})`, abi, trackedBlock: trackedBlock ?? 0 }];
-      }
-    }
-    if (options) {
-      contract.options = options;
-    }
-    await contract.save();
+    return {
+      contractAddress: contract.contractAddress,
+      abi: contract.abi,
+      blockNumber: contract.blockNumber,
+      options: contract.options,
+    };
   }
 
-  async updateBlock(address: string, eventName: string, blockNumber: number) {
-    await ContractModel.findOneAndUpdate({ address, 'events.abi.name': eventName }, { $set: { 'events.$.trackedBlock': blockNumber } });
-  }
-
-  async removeContract(eventId: string) {
-    await ContractModel.deleteOne({ _id: eventId });
-  }
-
-  async getContracts(address?: string) {
-    const params = { address };
-    const filters = Object.fromEntries(Object.entries(params).filter(([_, v]) => !!v));
-    return ContractModel.find(filters).lean();
+  async getContracts(): Promise<Contract[]> {
+    const contracts = await Antenna.find().lean();
+    return contracts.map((contract) => ({
+      contractAddress: contract.contractAddress,
+      abi: contract.abi,
+      blockNumber: contract.blockNumber,
+      options: contract.options,
+    }));
   }
 }

@@ -10,7 +10,6 @@ export type Config = {
   eventStore: EventStoreConfig;
   producer: BroadcastConfig;
   http: HttpConfig;
-  eventSync?: boolean;
   rpc: string;
   delayBlock?: number;
   blockPerSecond?: number;
@@ -36,7 +35,6 @@ class EthereumAntenna {
     this.producer = createBroadcastInstance(config.producer);
     this.http = createHttpInstance(config.http);
     this.rpc = config.rpc;
-    this.eventSync = config.eventSync;
     this.delayBlock = config.delayBlock || 0;
     this.blockPerSecond = config.blockPerSecond || 3;
     this.backOffBlock = config.backOffBlock || 50;
@@ -49,7 +47,6 @@ class EthereumAntenna {
     await this.producer.connect();
 
     await listenBlockchain({
-      eventSync: this.eventSync,
       rpc: this.rpc,
       delayBlock: this.delayBlock,
       blockPerSecond: this.blockPerSecond,
@@ -57,7 +54,7 @@ class EthereumAntenna {
       threshold: this.threshold,
       limit: this.limit,
       eventStore: this.eventStore,
-      producer: this.producer
+      producer: this.producer,
     });
 
     await this.http.listenHTTP({ eventStore: this.eventStore });
@@ -68,7 +65,6 @@ class EthereumAntenna {
     await this.producer.connect();
 
     await listenBlockchain({
-      eventSync: this.eventSync,
       rpc: this.rpc,
       delayBlock: this.delayBlock,
       blockPerSecond: this.blockPerSecond,
@@ -76,7 +72,7 @@ class EthereumAntenna {
       threshold: this.threshold,
       limit: this.limit,
       eventStore: this.eventStore,
-      producer: this.producer
+      producer: this.producer,
     });
   }
 
