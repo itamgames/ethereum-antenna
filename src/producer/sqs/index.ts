@@ -31,6 +31,7 @@ export class BroadcastSQS implements IProducer {
           Entries: chunk.map((message) => ({
             Id: message.id,
             MessageGroupId: this.config.fifo ? message.id : undefined,
+            MessageDeduplicationId: this.config.fifo ? message.id : undefined,
             MessageBody: JSON.stringify({
               id: message.id,
               transactionHash: message.transactionHash,

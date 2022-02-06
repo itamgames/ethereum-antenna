@@ -9,6 +9,7 @@ type ListenBlockChainType = {
   blockPerSecond: number;
   backOffBlock: number;
   threshold: number;
+  limit: number;
   eventStore: IEventStore;
   producer: IProducer;
 };

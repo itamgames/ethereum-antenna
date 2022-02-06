@@ -15,6 +15,7 @@ export type Config = {
   blockPerSecond?: number;
   backOffBlock?: number;
   threshold?: number;
+  limit?: number;
 };
 
 class EthereumAntenna {
@@ -23,11 +24,11 @@ class EthereumAntenna {
   http: IHttp;
   rpc: string;
   eventSync?: boolean;
-  concurrency: number;
   delayBlock: number;
   blockPerSecond: number;
   backOffBlock: number;
   threshold: number;
+  limit: number;
 
   constructor(config: Config) {
     this.eventStore = createEventStoreInstance(config.eventStore);
@@ -38,6 +39,7 @@ class EthereumAntenna {
     this.blockPerSecond = config.blockPerSecond || 3;
     this.backOffBlock = config.backOffBlock || 50;
     this.threshold = config.threshold || 50;
+    this.limit = config.limit || 1000;
   }
 
   async run() {
@@ -50,6 +52,7 @@ class EthereumAntenna {
       blockPerSecond: this.blockPerSecond,
       backOffBlock: this.backOffBlock,
       threshold: this.threshold,
+      limit: this.limit,
       eventStore: this.eventStore,
       producer: this.producer,
     });
@@ -67,6 +70,7 @@ class EthereumAntenna {
       blockPerSecond: this.blockPerSecond,
       backOffBlock: this.backOffBlock,
       threshold: this.threshold,
+      limit: this.limit,
       eventStore: this.eventStore,
       producer: this.producer,
     });

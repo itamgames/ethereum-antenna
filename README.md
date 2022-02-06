@@ -67,7 +67,7 @@ To run `Ethereum Antenna`, you should add parameters to create instance. Below i
 |http.port|number|false|3000|port number of http service|
 |http.prefix|string|false||prefix of routing url|
 |rpc|string|true||url of EVM chain RPC|
-|concurrency|number|false|10|async query limit when using async eventSync|
+|limit|number|false|1000|total range of each event query|
 |blockPerSecond|number|false|0|delay after each query|
 |delayBlock|number|false|0|distance from latest block number|
 |backOffBlock|number|false|50|distance from specific block number|
