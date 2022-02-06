@@ -23,7 +23,7 @@ async function listenBlockchain({
   producer,
 }: ListenBlockChainType) {
   const web3 = new Web3(rpc);
-  let [contracts, currentBlockNumber] = await Promise.all([
+  const [contracts, currentBlockNumber] = await Promise.all([
     eventStore.getContracts(),
     web3.eth.getBlockNumber(),
   ]);
