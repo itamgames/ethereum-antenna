@@ -1,7 +1,6 @@
 import { Atomic } from '../utils';
 import Web3 from 'web3';
 import { Contract as Web3Contract } from 'web3-eth-contract';
-import { v4 as uuidv4 } from 'uuid';
 import { Contract, IEventStore } from '../eventStore/interface';
 import { IProducer, QueueMessage } from '../producer/interface';
 
@@ -54,9 +53,8 @@ async function listenBlockchain({
             blockTimestamp[event.blockNumber] = typeof block.timestamp === 'string' ? Number(block.timestamp) : block.timestamp;
           }
   
-          const id = uuidv4();
           return {
-            id,
+            id: `${event.transactionHash}-${event.logIndex}`,
             transactionHash: event.transactionHash,
             logIndex: event.logIndex,
             contractAddress: contract.contractAddress,
