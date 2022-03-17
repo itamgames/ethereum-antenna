@@ -25,6 +25,16 @@ export class EventStoreMongoDB implements IEventStore {
     await antenna.save();
   }
 
+  async updateEvent(contractAddress: string, abi: AbiItem[]): Promise<void> {
+    let antenna = await Antenna.findOne({ contractAddress });
+    if (!antenna) {
+      antenna = await Antenna.create({ contractAddress });
+    }
+
+    antenna.abi = abi;
+    await antenna.save();
+  }
+
   async removeEvent(contractAddress: string, eventName: string): Promise<void> {
     const antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
