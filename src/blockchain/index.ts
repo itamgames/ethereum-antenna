@@ -48,6 +48,10 @@ async function listenBlockchain({
   
       const broadcastMessages: QueueMessage[] = [];
       for (const event of events) {
+        if (!event.event) {
+          continue;
+        }
+
         if (!blockTimestamp[event.blockNumber]) {
           const block = await web3.eth.getBlock(event.blockNumber, false);
           blockTimestamp[event.blockNumber] = typeof block.timestamp === 'string' ? Number(block.timestamp) : block.timestamp;
