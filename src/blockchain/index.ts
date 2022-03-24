@@ -46,26 +46,25 @@ async function listenBlockchain({
         toBlock,
       });
   
-      const broadcastMessages: QueueMessage[] = await Promise.all(
-        events.map(async (event) => {
-          if (!blockTimestamp[event.blockNumber]) {
-            const block = await web3.eth.getBlock(event.blockNumber, false);
-            blockTimestamp[event.blockNumber] = typeof block.timestamp === 'string' ? Number(block.timestamp) : block.timestamp;
-          }
-  
-          return {
-            id: `${event.transactionHash}-${event.logIndex}`,
-            transactionHash: event.transactionHash,
-            logIndex: event.logIndex,
-            contractAddress: contract.contractAddress,
-            event: event.event!,
-            params: event.returnValues,
-            options: contract.options,
-            blockNumber: event.blockNumber,
-            blockCreatedAt: new Date(blockTimestamp[event.blockNumber] * 1000),
-          };
-        }),
-      );
+      const broadcastMessages: QueueMessage[] = [];
+      for (const event of events) {
+        if (!blockTimestamp[event.blockNumber]) {
+          const block = await web3.eth.getBlock(event.blockNumber, false);
+          blockTimestamp[event.blockNumber] = typeof block.timestamp === 'string' ? Number(block.timestamp) : block.timestamp;
+        }
+
+        broadcastMessages.push({
+          id: `${event.transactionHash}-${event.logIndex}`,
+          transactionHash: event.transactionHash,
+          logIndex: event.logIndex,
+          contractAddress: contract.contractAddress,
+          event: event.event!,
+          params: event.returnValues,
+          options: contract.options,
+          blockNumber: event.blockNumber,
+          blockCreatedAt: new Date(blockTimestamp[event.blockNumber] * 1000),
+        });
+      }
   
       await producer.broadcast(broadcastMessages);
       await eventStore.updateBlock(contract.contractAddress, toBlock);
