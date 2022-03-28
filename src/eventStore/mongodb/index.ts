@@ -13,7 +13,7 @@ export class EventStoreMongoDB implements IEventStore {
     await connect(this.config.uri, this.config.connectionOptions);
   }
 
-  async addEvent(contractAddress: string, abi: AbiItem): Promise<void> {
+  async addEvent(contractAddress: string, abi: AbiItem, { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> } = {}): Promise<void> {
     let antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
       antenna = await Antenna.create({ contractAddress });
@@ -22,16 +22,28 @@ export class EventStoreMongoDB implements IEventStore {
     const arr = antenna.abi || [];
     arr.push(abi);
     antenna.abi = arr;
+    if (blockNumber) {
+      antenna.blockNumber = blockNumber;
+    }
+    if (options) {
+      antenna.options = options;
+    }
     await antenna.save();
   }
 
-  async updateEvent(contractAddress: string, abi: AbiItem[]): Promise<void> {
+  async updateEvent(contractAddress: string, abi: AbiItem[], { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> } = {}): Promise<void> {
     let antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
       antenna = await Antenna.create({ contractAddress });
     }
 
     antenna.abi = abi;
+    if (blockNumber) {
+      antenna.blockNumber = blockNumber;
+    }
+    if (options) {
+      antenna.options = options;
+    }
     await antenna.save();
   }
 

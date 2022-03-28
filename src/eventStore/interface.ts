@@ -17,8 +17,8 @@ export interface Contract {
 
 export interface IEventStore {
   connect(): Promise<void>;
-  addEvent(contractAddress: string, abi: AbiItem): Promise<void>;
-  updateEvent(contractAddress: string, abi: AbiItem[]): Promise<void>;
+  addEvent(contractAddress: string, abi: AbiItem, { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> }): Promise<void>;
+  updateEvent(contractAddress: string, abi: AbiItem[], { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> }): Promise<void>;
   removeEvent(contractAddress: string, eventName: string): Promise<void>;
   updateBlock(contractAddress: string, blockNumber: number): Promise<void>;
   getContract(contractAddress: string): Promise<Contract>;
