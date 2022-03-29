@@ -1,11 +1,17 @@
 import { connect } from 'mongoose';
-import { IEventStore, EventStoreConfig, Contract, AbiItem } from '../interface';
+import {
+  IEventStore,
+  EventStoreConfig,
+  Contract,
+  AbiItem,
+  DBConfig,
+} from '../interface';
 import { Antenna } from './antenna';
 
 export class EventStoreMongoDB implements IEventStore {
-  config: EventStoreConfig;
+  config: EventStoreConfig['mongodb'];
 
-  constructor(config: EventStoreConfig) {
+  constructor(config: EventStoreConfig['mongodb']) {
     this.config = config;
   }
 
@@ -13,7 +19,14 @@ export class EventStoreMongoDB implements IEventStore {
     await connect(this.config.uri, this.config.connectionOptions);
   }
 
-  async addEvent(contractAddress: string, abi: AbiItem, { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> } = {}): Promise<void> {
+  async addEvent(
+    contractAddress: string,
+    abi: AbiItem,
+    {
+      blockNumber,
+      options,
+    }: { blockNumber?: number; options?: Record<string, unknown> } = {},
+  ): Promise<void> {
     let antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
       antenna = await Antenna.create({ contractAddress });
@@ -31,7 +44,14 @@ export class EventStoreMongoDB implements IEventStore {
     await antenna.save();
   }
 
-  async updateEvent(contractAddress: string, abi: AbiItem[], { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> } = {}): Promise<void> {
+  async updateEvent(
+    contractAddress: string,
+    abi: AbiItem[],
+    {
+      blockNumber,
+      options,
+    }: { blockNumber?: number; options?: Record<string, unknown> } = {},
+  ): Promise<void> {
     let antenna = await Antenna.findOne({ contractAddress });
     if (!antenna) {
       antenna = await Antenna.create({ contractAddress });

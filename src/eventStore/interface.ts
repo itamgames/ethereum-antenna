@@ -1,12 +1,21 @@
 import { ConnectOptions } from 'mongoose';
 
-type MongoConfig = {
-  type: 'mongodb';
-  uri: string;
-  connectionOptions?: ConnectOptions;
+export type DBConfig = {
+  mongodb: {
+    type: 'mongodb';
+    uri: string;
+    connectionOptions?: ConnectOptions;
+  };
+  dynamodb: {
+    type: 'dynamodb';
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    region: string;
+  };
 };
 
-export type EventStoreConfig = MongoConfig;
+export type EventStoreConfig = DBConfig;
+export type EventStoreType = keyof DBConfig;
 
 export interface Contract {
   contractAddress: string;
@@ -17,8 +26,22 @@ export interface Contract {
 
 export interface IEventStore {
   connect(): Promise<void>;
-  addEvent(contractAddress: string, abi: AbiItem, { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> }): Promise<void>;
-  updateEvent(contractAddress: string, abi: AbiItem[], { blockNumber, options }: { blockNumber?: number, options?: Record<string, unknown> }): Promise<void>;
+  addEvent(
+    contractAddress: string,
+    abi: AbiItem,
+    {
+      blockNumber,
+      options,
+    }: { blockNumber?: number; options?: Record<string, unknown> },
+  ): Promise<void>;
+  updateEvent(
+    contractAddress: string,
+    abi: AbiItem[],
+    {
+      blockNumber,
+      options,
+    }: { blockNumber?: number; options?: Record<string, unknown> },
+  ): Promise<void>;
   removeEvent(contractAddress: string, eventName: string): Promise<void>;
   updateBlock(contractAddress: string, blockNumber: number): Promise<void>;
   getContract(contractAddress: string): Promise<Contract>;

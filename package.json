@@ -39,6 +39,7 @@
     "@aws-sdk/client-sqs": "^3.48.0",
     "@koa/router": "^10.1.1",
     "@typegoose/typegoose": "^9.3.1",
+    "dynamoose": "^2.8.5",
     "koa": "^2.13.4",
     "koa-bodyparser": "^4.3.0",
     "mongoose": "^6.1.3",
