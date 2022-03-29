@@ -19,9 +19,8 @@ export class HttpKoa implements IHttp {
     }
     // add contracts
     router.post('/events', async (ctx) => {
-      const { contractAddress, abi, blockNumber, options } = ctx.request.body;
-      const { override } = ctx.request.query;
-      if (override) {
+      const { contractAddress, abi, blockNumber, options, override } = ctx.request.body;
+      if (!!override) {
         await eventStore.updateEvent(contractAddress, abi, { blockNumber, options });
       } else {
         await eventStore.addEvent(contractAddress, abi, { blockNumber, options });
