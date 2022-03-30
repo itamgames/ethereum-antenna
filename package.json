@@ -11,7 +11,7 @@
     "url": "https://github.com/itamgames/ethereum-antenna"
   },
   "scripts": {
-    "start": "ts-node scripts/antenna.ts",
+    "test": "ts-node scripts/test.ts",
     "types": "rimraf dist && tsc",
     "build": "yarn types && node scripts/build.mjs",
     "prepublish": "yarn build",

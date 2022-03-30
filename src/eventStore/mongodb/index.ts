@@ -1,11 +1,5 @@
 import { connect } from 'mongoose';
-import {
-  IEventStore,
-  EventStoreConfig,
-  Contract,
-  AbiItem,
-  DBConfig,
-} from '../interface';
+import { AbiItem, Contract, EventStoreConfig, IEventStore } from '../interface';
 import { Antenna } from './antenna';
 
 export class EventStoreMongoDB implements IEventStore {

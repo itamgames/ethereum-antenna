@@ -18,12 +18,34 @@ export const AntennaModel = dynamoose.model<Antenna>(
       },
       abi: {
         type: Array,
+        schema: [
+          new dynamoose.Schema({
+            anonymous: Boolean,
+            inputs: {
+              type: Array,
+              schema: [
+                new dynamoose.Schema({
+                  indexed: Boolean,
+                  internalType: String,
+                  name: String,
+                  type: String,
+                  parent: dynamoose.THIS,
+                }),
+              ],
+            },
+            name: String,
+            type: String,
+            parent: dynamoose.THIS,
+          }),
+        ],
       },
       blockNumber: {
         type: Number,
+        required: false,
       },
       options: {
         type: Array,
+        required: false,
       },
     },
     { timestamps: true },
