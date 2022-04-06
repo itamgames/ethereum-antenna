@@ -3,6 +3,8 @@ dist*
 node_modules
 .serverless
 
+scripts/*.ts
+
 #credentials
 .env*
 *config.js

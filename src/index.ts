@@ -2,12 +2,16 @@ import listenBlockchain from './blockchain';
 import { createEventStoreInstance } from './eventStore';
 import { createBroadcastInstance } from './producer';
 import { createHttpInstance } from './http';
-import { EventStoreConfig, IEventStore } from './eventStore/interface';
+import {
+  EventStoreConfig,
+  EventStoreType,
+  IEventStore,
+} from './eventStore/interface';
 import { BroadcastConfig, IProducer } from './producer/interface';
 import { HttpConfig, IHttp } from './http/interface';
 
 export type Config = {
-  eventStore: EventStoreConfig;
+  eventStore: EventStoreConfig[EventStoreType];
   producer: BroadcastConfig;
   http: HttpConfig;
   rpc: string;
