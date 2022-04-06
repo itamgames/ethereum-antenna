@@ -1,6 +1,6 @@
 import { ConnectOptions } from 'mongoose';
 
-export type DBConfig = {
+type DBConfig = {
   mongodb: {
     type: 'mongodb';
     uri: string;

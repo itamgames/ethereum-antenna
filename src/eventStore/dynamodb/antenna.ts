@@ -2,7 +2,14 @@ import * as dynamoose from 'dynamoose';
 import { Document } from 'dynamoose/dist/Document';
 import { AbiItem } from '../interface';
 
-class Antenna extends Document {
+export interface DynamoAntennaProperty {
+  contractAddress: string;
+  abi: AbiItem[];
+  blockNumber: number;
+  options: Record<string, unknown>;
+}
+
+class Antenna extends Document implements DynamoAntennaProperty {
   contractAddress: string;
   abi: AbiItem[];
   blockNumber: number;

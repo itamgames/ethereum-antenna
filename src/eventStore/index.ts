@@ -1,9 +1,10 @@
+import { ConnectOptions } from 'mongoose';
 import { EventStoreDynamoDB } from './dynamodb';
 import { EventStoreConfig, EventStoreType } from './interface';
 import { EventStoreMongoDB } from './mongodb';
 
 export function createEventStoreInstance(
-  config: EventStoreConfig[EventStoreType],
+  config: EventStoreConfig['mongodb'] | EventStoreConfig['dynamodb'],
 ) {
   const types = {
     mongodb: EventStoreMongoDB,

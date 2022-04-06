@@ -1,6 +1,6 @@
 import * as dynamoose from 'dynamoose';
 import { AbiItem, Contract, EventStoreConfig, IEventStore } from '../interface';
-import { AntennaModel } from './antenna';
+import { AntennaModel, DynamoAntennaProperty } from './antenna';
 
 export class EventStoreDynamoDB implements IEventStore {
   config: EventStoreConfig['dynamodb'];
@@ -10,7 +10,7 @@ export class EventStoreDynamoDB implements IEventStore {
   }
 
   async connect(): Promise<void> {
-    const config: any = {
+    const config: Partial<EventStoreConfig['dynamodb']> = {
       region: this.config.region,
     };
 
@@ -120,9 +120,11 @@ export class EventStoreDynamoDB implements IEventStore {
   }
 
   async getContracts(): Promise<Contract[]> {
-    const contracts = await AntennaModel.scan().all().exec();
+    const contracts: DynamoAntennaProperty[] = await AntennaModel.scan()
+      .all()
+      .exec();
 
-    return contracts.map((contract: any) => ({
+    return contracts.map((contract) => ({
       contractAddress: contract.contractAddress,
       abi: contract.abi,
       blockNumber: contract.blockNumber,
