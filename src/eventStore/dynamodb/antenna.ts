@@ -57,4 +57,5 @@ export const AntennaModel = dynamoose.model<Antenna>(
     },
     { timestamps: true },
   ),
+  { create: false, waitForActive: false },
 );
