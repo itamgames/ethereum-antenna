@@ -15,7 +15,7 @@ export class EventStoreMongoDB implements IEventStore {
 
   async addEvent(
     contractAddress: string,
-    abi: AbiItem,
+    abi: AbiItem[],
     {
       blockNumber,
       options,
@@ -27,7 +27,7 @@ export class EventStoreMongoDB implements IEventStore {
     }
 
     const arr = antenna.abi || [];
-    arr.push(abi);
+    arr.push(...abi);
     antenna.abi = arr;
     if (blockNumber) {
       antenna.blockNumber = blockNumber;

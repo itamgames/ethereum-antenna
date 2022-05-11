@@ -28,7 +28,7 @@ export interface IEventStore {
   connect(): Promise<void>;
   addEvent(
     contractAddress: string,
-    abi: AbiItem,
+    abi: AbiItem[],
     {
       blockNumber,
       options,

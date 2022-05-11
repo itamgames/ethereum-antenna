@@ -23,7 +23,7 @@ export class EventStoreDynamoDB implements IEventStore {
 
   async addEvent(
     contractAddress: string,
-    abi: AbiItem,
+    abi: AbiItem[],
     {
       blockNumber,
       options,
@@ -39,7 +39,7 @@ export class EventStoreDynamoDB implements IEventStore {
     }
 
     const arr = contract.abi || [];
-    arr.push(abi);
+    arr.push(...abi);
     contract.abi = arr;
     if (blockNumber) {
       contract.blockNumber = blockNumber;
