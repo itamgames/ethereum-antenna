@@ -21,9 +21,9 @@ export class EventStoreMongoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let antenna = await Antenna.findOne({ contractAddress });
+    let antenna = await Antenna(this.config.network).findOne({ contractAddress });
     if (!antenna) {
-      antenna = await Antenna.create({ contractAddress });
+      antenna = await Antenna(this.config.network).create({ contractAddress });
     }
 
     const arr = antenna.abi || [];
@@ -46,9 +46,9 @@ export class EventStoreMongoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let antenna = await Antenna.findOne({ contractAddress });
+    let antenna = await Antenna(this.config.network).findOne({ contractAddress });
     if (!antenna) {
-      antenna = await Antenna.create({ contractAddress });
+      antenna = await Antenna(this.config.network).create({ contractAddress });
     }
 
     antenna.abi = abi;
@@ -62,7 +62,7 @@ export class EventStoreMongoDB implements IEventStore {
   }
 
   async removeEvent(contractAddress: string, eventName: string): Promise<void> {
-    const antenna = await Antenna.findOne({ contractAddress });
+    const antenna = await Antenna(this.config.network).findOne({ contractAddress });
     if (!antenna) {
       throw Error('invalid contract address');
     }
@@ -83,11 +83,11 @@ export class EventStoreMongoDB implements IEventStore {
     contractAddress: string,
     blockNumber: number,
   ): Promise<void> {
-    await Antenna.updateOne({ contractAddress }, { $set: { blockNumber } });
+    await Antenna(this.config.network).updateOne({ contractAddress }, { $set: { blockNumber } });
   }
 
   async getContract(contractAddress: string): Promise<Contract> {
-    const contract = await Antenna.findOne({ contractAddress }).lean();
+    const contract = await Antenna(this.config.network).findOne({ contractAddress }).lean();
     if (!contract) {
       throw Error('invalidr contract address');
     }
@@ -100,7 +100,7 @@ export class EventStoreMongoDB implements IEventStore {
   }
 
   async getContracts(): Promise<Contract[]> {
-    const contracts = await Antenna.find().lean();
+    const contracts = await Antenna(this.config.network).find().lean();
     return contracts.map((contract) => ({
       contractAddress: contract.contractAddress,
       abi: contract.abi,

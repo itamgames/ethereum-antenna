@@ -13,7 +13,7 @@ import { AbiItem } from '../interface';
 )
 @modelOptions({
   options: { allowMixed: Severity.ALLOW },
-  schemaOptions: { timestamps: true, collection: 'Antenna' },
+  schemaOptions: { timestamps: true },
 })
 export class AntennaSchema {
   @prop({ required: true })
@@ -29,4 +29,5 @@ export class AntennaSchema {
   options: Record<string, unknown>;
 }
 
-export const Antenna = getModelForClass(AntennaSchema);
+
+export const Antenna = (network?: string) => getModelForClass(AntennaSchema, { schemaOptions: { collection: `${network ? `${network}-` : ''}Antenna` } });

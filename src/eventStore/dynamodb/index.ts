@@ -29,11 +29,11 @@ export class EventStoreDynamoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let contract = await AntennaModel.get({
+    let contract = await AntennaModel(this.config.network).get({
       contractAddress,
     });
     if (!contract) {
-      contract = await AntennaModel.create({
+      contract = await AntennaModel(this.config.network).create({
         contractAddress,
       });
     }
@@ -58,11 +58,11 @@ export class EventStoreDynamoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let contract = await AntennaModel.get({
+    let contract = await AntennaModel(this.config.network).get({
       contractAddress,
     });
     if (!contract) {
-      contract = await AntennaModel.create({
+      contract = await AntennaModel(this.config.network).create({
         contractAddress,
       });
     }
@@ -78,7 +78,7 @@ export class EventStoreDynamoDB implements IEventStore {
   }
 
   async removeEvent(contractAddress: string, eventName: string): Promise<void> {
-    const contract = await AntennaModel.get({
+    const contract = await AntennaModel(this.config.network).get({
       contractAddress,
     });
     if (!contract) {
@@ -101,11 +101,11 @@ export class EventStoreDynamoDB implements IEventStore {
     contractAddress: string,
     blockNumber: number,
   ): Promise<void> {
-    await AntennaModel.update({ contractAddress }, { blockNumber });
+    await AntennaModel(this.config.network).update({ contractAddress }, { blockNumber });
   }
 
   async getContract(contractAddress: string): Promise<Contract> {
-    const contract = await AntennaModel.get({
+    const contract = await AntennaModel(this.config.network).get({
       contractAddress,
     });
     if (!contract) {
@@ -120,7 +120,7 @@ export class EventStoreDynamoDB implements IEventStore {
   }
 
   async getContracts(): Promise<Contract[]> {
-    const contracts: DynamoAntennaProperty[] = await AntennaModel.scan()
+    const contracts: DynamoAntennaProperty[] = await AntennaModel(this.config.network).scan()
       .all()
       .exec();
 

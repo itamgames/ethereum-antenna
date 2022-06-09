@@ -16,8 +16,8 @@ class Antenna extends Document implements DynamoAntennaProperty {
   options: Record<string, unknown>;
 }
 
-export const AntennaModel = dynamoose.model<Antenna>(
-  'Antenna',
+export const AntennaModel = (network?: string) => dynamoose.model<Antenna>(
+  `${network ? `${network}-` : ''}Antenna`,
   new dynamoose.Schema(
     {
       contractAddress: {
@@ -51,7 +51,7 @@ export const AntennaModel = dynamoose.model<Antenna>(
         required: false,
       },
       options: {
-        type: Array,
+        type: Object,
         required: false,
       },
     },

@@ -5,12 +5,14 @@ type DBConfig = {
     type: 'mongodb';
     uri: string;
     connectionOptions?: ConnectOptions;
+    network?: string;
   };
   dynamodb: {
     type: 'dynamodb';
     accessKeyId?: string;
     secretAccessKey?: string;
     region: string;
+    network?: string;
   };
 };
 
