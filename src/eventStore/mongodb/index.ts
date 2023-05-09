@@ -21,7 +21,7 @@ export class EventStoreMongoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let antenna = await Antenna(this.config.network).findOne({ contractAddress });
+    let antenna = await Antenna(this.config.network).findOne({ contractAddress }, undefined, { collation: { locale: 'en', strength: 2 } });
     if (!antenna) {
       antenna = await Antenna(this.config.network).create({ contractAddress });
     }
@@ -46,7 +46,7 @@ export class EventStoreMongoDB implements IEventStore {
       options,
     }: { blockNumber?: number; options?: Record<string, unknown> } = {},
   ): Promise<void> {
-    let antenna = await Antenna(this.config.network).findOne({ contractAddress });
+    let antenna = await Antenna(this.config.network).findOne({ contractAddress }, undefined, { collation: { locale: 'en', strength: 2 } });
     if (!antenna) {
       antenna = await Antenna(this.config.network).create({ contractAddress });
     }
@@ -62,7 +62,7 @@ export class EventStoreMongoDB implements IEventStore {
   }
 
   async removeEvent(contractAddress: string, eventName: string): Promise<void> {
-    const antenna = await Antenna(this.config.network).findOne({ contractAddress });
+    const antenna = await Antenna(this.config.network).findOne({ contractAddress }, undefined, { collation: { locale: 'en', strength: 2 } });
     if (!antenna) {
       throw Error('invalid contract address');
     }
@@ -83,11 +83,11 @@ export class EventStoreMongoDB implements IEventStore {
     contractAddress: string,
     blockNumber: number,
   ): Promise<void> {
-    await Antenna(this.config.network).updateOne({ contractAddress }, { $set: { blockNumber } });
+    await Antenna(this.config.network).updateOne({ contractAddress }, { $set: { blockNumber } }, { collation: { locale: 'en', strength: 2 } });
   }
 
   async getContract(contractAddress: string): Promise<Contract> {
-    const contract = await Antenna(this.config.network).findOne({ contractAddress }).lean();
+    const contract = await Antenna(this.config.network).findOne({ contractAddress }, undefined, { collation: { locale: 'en', strength: 2 } }).lean();
     if (!contract) {
       throw Error('invalidr contract address');
     }
